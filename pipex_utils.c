@@ -6,7 +6,7 @@
 /*   By: sliashko <sliashko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/04 13:26:20 by sliashko          #+#    #+#             */
-/*   Updated: 2023/12/04 13:27:05 by sliashko         ###   ########.fr       */
+/*   Updated: 2023/12/04 15:41:47 by sliashko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,4 +49,17 @@ char	*find_path(char *cmd, char **envp)
 		i++;
 	}
 	return (NULL);
+}
+
+void	ft_free_table(char **tab)
+{
+	size_t	i;
+
+	i = 0;
+	while (tab[i])
+	{
+		free(tab[i]);
+		i++;
+	}
+	free(tab);
 }

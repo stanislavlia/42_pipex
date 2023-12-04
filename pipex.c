@@ -6,7 +6,7 @@
 /*   By: sliashko <sliashko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/27 16:20:21 by sliashko          #+#    #+#             */
-/*   Updated: 2023/12/04 14:14:15 by sliashko         ###   ########.fr       */
+/*   Updated: 2023/12/04 15:45:52 by sliashko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,13 +34,13 @@ void	child_command1(int fds[2], char **argv, char **envp)
 	args = ft_split(argv[2], ' ');
 	if (inp_fd == -1)
 	{
-		write(1, "pipex erros: Input file reading error\n", 39);
+		write(2, "pipex erros: Input file reading error\n", 39);
 		exit(-1);
 	}
 	args[0] = find_path(args[0], envp);
 	if (args[0] == NULL)
 	{
-		write(1, "pipex error: command not found\n", 32);
+		write(2, "pipex error: command not found\n", 32);
 		exit(-1);
 	}
 	dup2(inp_fd, STDIN_FILENO);
@@ -49,7 +49,11 @@ void	child_command1(int fds[2], char **argv, char **envp)
 	close(fds[1]);
 	close(fds[0]);
 	if (execv(args[0], args) == -1)
+	{
+		ft_free_table(args);
+		write(2, "pipex error: failed to execute\n", 32);
 		exit(-1);
+	}
 }
 
 // /*
@@ -76,10 +80,11 @@ void	child_command2(int fds[2], char **argv, char **envp)
 	args = ft_split(argv[3], ' ');
 	args[0] = find_path(args[0], envp);
 	if (args[0] != NULL)
-		out_fd = open(argv[4], O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+		out_fd = open(argv[4], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (out_fd == -1)
 	{
-		write(1, "pipex error: Invalid or non existing file\n", 43);
+		ft_free_table(args);
+		write(2, "pipex error: Invalid or non existing file\n", 43);
 		exit(-1);
 	}
 	dup2(out_fd, STDOUT_FILENO);
@@ -88,7 +93,8 @@ void	child_command2(int fds[2], char **argv, char **envp)
 	close(fds[1]);
 	if (execv(args[0], args) == -1)
 	{
-		write(1, "pipex error: command not found\n", 32);
+		ft_free_table(args);
+		write(2, "pipex error: command not found\n", 32);
 		exit(-1);
 	}
 }
@@ -96,22 +102,26 @@ void	child_command2(int fds[2], char **argv, char **envp)
 int	main(int argc, char **argv, char **envp)
 {
 	int	fds[2];
+	int	id1;
+	int	id2;
 
 	if (argc != 5)
 	{
-		ft_putstr_fd("format: ./pipex infile \"ls -l\" \"wc -l\" outfile\n", 1);
+		ft_putstr_fd("format: ./pipex infile \"ls -l\" \"wc -l\" outfile\n", 2);
 		return (3);
 	}
 	if (pipe(fds) == -1)
 	{
-		ft_putstr_fd("Some error occured with pipe\n", 1);
+		ft_putstr_fd("Error occured with pipe() func\n", 2);
 		return (2);
 	}
-	if (fork() == 0)
+	id1 = fork();
+	if (id1 == 0)
 	{
 		child_command1(fds, argv, envp);
 	}
-	if (fork() == 0)
+	id2 = fork();
+	if (id2 == 0)
 	{
 		child_command2(fds, argv, envp);
 	}

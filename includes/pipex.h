@@ -6,7 +6,7 @@
 /*   By: sliashko <sliashko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/27 16:20:28 by sliashko          #+#    #+#             */
-/*   Updated: 2023/12/04 13:27:42 by sliashko         ###   ########.fr       */
+/*   Updated: 2023/12/04 15:42:26 by sliashko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,5 +24,6 @@
 # include "libft.h"
 
 char	*find_path(char *cmd, char **envp);
+void	ft_free_table(char **tab);
 
 #endif
