@@ -6,7 +6,7 @@
 /*   By: sliashko <sliashko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/27 16:20:28 by sliashko          #+#    #+#             */
-/*   Updated: 2023/12/04 15:42:26 by sliashko         ###   ########.fr       */
+/*   Updated: 2023/12/11 12:44:10 by sliashko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,5 +25,8 @@
 
 char	*find_path(char *cmd, char **envp);
 void	ft_free_table(char **tab);
+void	simulate_pipe(char *cmd, char **envp);
+void	put_error_msg(char *msg);
+void	files_err_handler(int argc, int in_fd, int out_fd);
 
 #endif

@@ -1,8 +1,7 @@
 NAME = pipex
 CC = @gcc
 RM = @rm -f
-#FLAGS = -Wall -Wextra -Werror 
-FLAGS = 	#turn off flags for DEV
+FLAGS = -Wall -Wextra -Werror 
 
 YELLOW = \033[33;49;1m
 CYAN = \033[33;36;1m

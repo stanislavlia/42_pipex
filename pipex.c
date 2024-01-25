@@ -6,125 +6,77 @@
 /*   By: sliashko <sliashko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/27 16:20:21 by sliashko          #+#    #+#             */
-/*   Updated: 2023/12/04 15:45:52 by sliashko         ###   ########.fr       */
+/*   Updated: 2023/12/11 12:49:50 by sliashko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "includes/pipex.h"
 
-/*
- * Executes the first command (command1) in the pipeline.
- *
- * This function opens the input file, setting it as the standard input (stdin).
- * It then redirects its output to a pipe for further processing. The function
- * dynamically splits the command arguments and executes command1 using execv.
- *
- * Parameters:
- *  fds: file descriptors for pipe communication
- *  argv: program arguments
- *  envp: environment variables
- *
- */
-void	child_command1(int fds[2], char **argv, char **envp)
+void	handle_args(char **args, char **envp)
 {
-	int		inp_fd;
-	char	**args;
-
-	inp_fd = open(argv[1], O_RDONLY);
-	args = ft_split(argv[2], ' ');
-	if (inp_fd == -1)
-	{
-		write(2, "pipex erros: Input file reading error\n", 39);
-		exit(-1);
-	}
-	args[0] = find_path(args[0], envp);
+	if (args == NULL)
+		put_error_msg("Memory allocation failed\n");
 	if (args[0] == NULL)
-	{
-		write(2, "pipex error: command not found\n", 32);
-		exit(-1);
-	}
-	dup2(inp_fd, STDIN_FILENO);
-	dup2(fds[1], STDOUT_FILENO);
-	close(inp_fd);
-	close(fds[1]);
-	close(fds[0]);
-	if (execv(args[0], args) == -1)
-	{
-		ft_free_table(args);
-		write(2, "pipex error: failed to execute\n", 32);
-		exit(-1);
-	}
+		put_error_msg("Invalid command provided\n");
+	if (access(args[0], F_OK | X_OK) == -1)
+		args[0] = find_path(args[0], envp);
 }
 
-// /*
-//  * Executes the second command (command2) in the pipeline.
-//  *
-//  * This function takes input from the pipe (output of command1) and redirects
-//  * it to the command2 process, 
-//  * then writes the output of command2 to the specified
-//  * output file. In this code snippet, 
-//  * command2 is hardcoded as 'wc -c', but it
-//  * can be modified for dynamic argument handling similar to child_command1.
-//  *
-//  * Parameters:
-//  *  fds: file descriptors for pipe communication
-//  *  argv: program arguments
-//  *  envp: environment variables
-//  *
-//  */
-void	child_command2(int fds[2], char **argv, char **envp)
+void	simulate_pipe(char *cmd, char **envp)
 {
-	int		out_fd;
+	int		fds[2];
+	pid_t	pid;
 	char	**args;
 
-	args = ft_split(argv[3], ' ');
-	args[0] = find_path(args[0], envp);
-	if (args[0] != NULL)
-		out_fd = open(argv[4], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (out_fd == -1)
+	args = ft_split(cmd, ' ');
+	handle_args(args, envp);
+	if (pipe(fds) == -1)
+		put_error_msg("Pipe function failed\n");
+	pid = fork();
+	if (pid == 0)
 	{
-		ft_free_table(args);
-		write(2, "pipex error: Invalid or non existing file\n", 43);
-		exit(-1);
+		close(fds[0]);
+		dup2(fds[1], STDOUT_FILENO);
+		if (execv(args[0], args) == -1)
+		{
+			ft_free_table(args);
+			put_error_msg("pipex error: command not found\n");
+		}
 	}
-	dup2(out_fd, STDOUT_FILENO);
-	dup2(fds[0], STDIN_FILENO);
-	close(fds[0]);
-	close(fds[1]);
-	if (execv(args[0], args) == -1)
+	else
 	{
-		ft_free_table(args);
-		write(2, "pipex error: command not found\n", 32);
-		exit(-1);
+		close(fds[1]);
+		dup2(fds[0], STDIN_FILENO);
 	}
 }
 
+//test for 3 commands
 int	main(int argc, char **argv, char **envp)
 {
-	int	fds[2];
-	int	id1;
-	int	id2;
+	int		in_fd;
+	int		out_fd;
+	int		i;
+	char	**args;
 
-	if (argc != 5)
+	in_fd = open(argv[1], O_RDONLY);
+	out_fd = open(argv[argc - 1], O_WRONLY | O_CREAT | O_TRUNC, 0777);
+	files_err_handler(argc, in_fd, out_fd);
+	i = 2;
+	dup2(in_fd, STDIN_FILENO);
+	while (i < argc - 2)
 	{
-		ft_putstr_fd("format: ./pipex infile \"ls -l\" \"wc -l\" outfile\n", 2);
-		return (3);
+		simulate_pipe(argv[i], envp);
+		i++;
 	}
-	if (pipe(fds) == -1)
+	dup2(out_fd, STDOUT_FILENO);
+	args = ft_split(argv[argc - 2], ' ');
+	if (access(args[0], F_OK | X_OK) == -1)
+		args[0] = find_path(args[0], envp);
+	if (execv(args[0], args) == -1)
 	{
-		ft_putstr_fd("Error occured with pipe() func\n", 2);
-		return (2);
+		ft_free_table(args);
+		put_error_msg("Last command failed to run\n");
 	}
-	id1 = fork();
-	if (id1 == 0)
-	{
-		child_command1(fds, argv, envp);
-	}
-	id2 = fork();
-	if (id2 == 0)
-	{
-		child_command2(fds, argv, envp);
-	}
-	close(fds[0]);
-	close(fds[1]);
 }
+// ./pipex inpit cmd1 cmd2 cmd3 cmd4 out
+//     0     1    2     3   4    5    6

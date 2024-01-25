@@ -6,7 +6,7 @@
 /*   By: sliashko <sliashko@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/04 13:26:20 by sliashko          #+#    #+#             */
-/*   Updated: 2023/12/04 15:41:47 by sliashko         ###   ########.fr       */
+/*   Updated: 2023/12/11 12:43:54 by sliashko         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,6 @@ char	*find_path(char *cmd, char **envp)
 {
 	int		i;
 	char	**path_dirs;
-	char	*correct_path;
 	char	*exec_file;
 
 	retrieve_path_dirs(envp, &path_dirs);
@@ -62,4 +61,20 @@ void	ft_free_table(char **tab)
 		i++;
 	}
 	free(tab);
+}
+
+void	put_error_msg(char *msg)
+{
+	ft_putstr_fd(msg, STDERR_FILENO);
+	exit(1);
+}
+
+void	files_err_handler(int argc, int in_fd, int out_fd)
+{
+	if (argc < 5)
+		put_error_msg("Too few args\n");
+	if (in_fd == -1)
+		put_error_msg("Cannot access input file\n");
+	if (out_fd == -1)
+		put_error_msg("Cannot access output file\n");
 }
